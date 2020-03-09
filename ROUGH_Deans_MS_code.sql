@@ -1,5 +1,55 @@
 /*Triplett wants to know how many students have received Dean's funding AND then only graduated with a MS*/
 
+/*****************************Tuition and Fees roughdraft***********************/
+select top 10 *
+from TR_tuitionfees
+
+--Step 1: Finding list of students who recieved any funding from graduate sources ONLY when they were graduate students
+select distinct fee.id, fee.name, fee.academic_period, fee.a_account_index, fee.category_desc, fee.moe_amount_total_paid, reg.student_level1
+into ##kr_tu1
+from TR_tuitionfees fee
+	left join gold_registration_bio reg on fee.id=reg.id and fee.academic_period=reg.academic_period
+where fee.academic_period between '201410' and '202020'
+	and a_account_index in ('130327', '137074','137086','137087','137088','137089','137167','130199')  --137167 might not be necessary since it seems to be used randomly for students, and 130199 is from Grad School MBU)
+	and student_level1 = 'GR'
+--drop table ##kr_tu1
+--3472
+
+		select * from ##kr_tu1
+
+select id, name, academic_period, a_account_index, category_desc, sum(moe_amount_total_paid) total_paid
+into ##kr_tu2
+from ##kr_tu1
+group by id, name, academic_period, a_account_index, category_desc
+having sum(moe_amount_total_paid) > 0
+order by name desc
+--drop table ##kr_tu2
+--2159
+
+		select * from ##kr_tu2
+
+--Step 3 combining total tuition and fee help over the 5 years per student
+select id, name, sum(total_paid) total_tu_paid
+from ##kr_tu2
+group by id, name
+order by id desc
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 select ppe.payroll_id, ppe.payroll_name, ppe.time_pp_term_code, ppe.assignment_org_level_7, ppe.assignment_org_desc_7, deg.student_level_desc, deg.program, deg.program_desc, SUM(ppe.sum_of_transaction_amount1) subtotal_paid, sum(fee.moe_amount_total_paid) tf_paid
 from GOLD_PAYPERIOD_EFFORT ppe
 	left join GOLD_Degrees_awarded deg on ppe.payroll_id=deg.id
